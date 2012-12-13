@@ -1,0 +1,26 @@
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 1, cCmdData = Invoke [String (LPS ["connect"]),Number 16#3FF0000000000000,Object (fromList [(LPS ["app"],String (LPS ["sample_videoconference"])),(LPS ["flashVer"],String (LPS ["WIN 7,0,19,0"])),(LPS ["swfUrl"],String (LPS ["file://\\\\wnmiherres03\\c$\\Documents and Set","tings\\mick.herres.MICKDOMAIN\\My Documents\\Flash Projects\\VideoRepracticing.swf"])),(LPS ["tcUrl"],String (LPS ["rtmp://192.168.2.14/sample_videoconferen","ce"]))])]},
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 0, cCmdData = Invoke [String (LPS ["_result"]),Number 16#3FF0000000000000,Null,Object (fromList [(LPS ["code"],String (LPS ["NetConnection.Connect.Success"])),(LPS ["description"],String (LPS ["Connection succeeded."])),(LPS ["level"],String (LPS ["status"]))])]},
+
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 0, cCmdData = Invoke [String (LPS ["createStream"]),Number 16#4000000000000000,Null]},
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 0, cCmdData = Invoke [String (LPS ["_result"]),Number 16#4000000000000000,Null,Number 16#3FF0000000000000]},
+
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 31, cCmdData = Invoke [String (LPS ["createStream"]),Number 16#4008000000000000,Null]},
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 0, cCmdData = Invoke [String (LPS ["_result"]),Number 16#4008000000000000,Null,Number 16#4000000000000000]},
+
+Cmd {cChannel = 8, cStreamId = 16#1000000, cTimer = 32, cCmdData = Invoke [String (LPS ["publish"]),Number 0,Null,String (LPS ["testVidStream"])]},
+Cmd {cChannel = 4, cStreamId = 16#1000000, cTimer = 0, cCmdData = Invoke [String (LPS ["onStatus"]),Number 0,Null,Object (fromList [(LPS ["clientid"],Number 4724895160322752512),(LPS ["code"],String (LPS ["NetStream.Publish.Start"])),(LPS ["description"],String (LPS ["Publishing testVidStream."])),(LPS ["level"],String (LPS ["status"]))])]},
+
+Cmd {cChannel = 13, cStreamId = 16#2000000, cTimer = 32, cCmdData = Invoke [String (LPS ["play"]),Number 0,Null,String (LPS ["testVidStream"])]},
+Cmd {cChannel = 5, cStreamId = 16#2000000, cTimer = 0, cCmdData = Invoke [String (LPS ["onStatus"]),Number 0,Null,Object (fromList [(LPS ["clientid"],Number 4724895160322752512),(LPS ["code"],String (LPS ["NetStream.Play.Reset"])),(LPS ["description"],String (LPS ["Playing and resetting testVidStream."])),(LPS ["details"],String (LPS ["testVidStream"])),(LPS ["level"],String (LPS ["status"]))])]},
+Cmd {cChannel = 5, cStreamId = 16#2000000, cTimer = 0, cCmdData = Invoke [String (LPS ["onStatus"]),Number 0,Null,Object (fromList [(LPS ["clientid"],Number 4724895160322752512),(LPS ["code"],String (LPS ["NetStream.Play.Start"])),(LPS ["description"],String (LPS ["Started playing testVidStream."])),(LPS ["details"],String (LPS ["tes","tVidStream"])),(LPS ["level"],String (LPS ["status"]))])]},
+
+Cmd {cChannel = 6, cStreamId = 16#1000000, cTimer = 1271, cCmdData = VideoData 1090},
+Cmd {cChannel = 6, cStreamId = 16#2000000, cTimer = 0, cCmdData = AudioData},
+Cmd {cChannel = 7, cStreamId = 16#2000000, cTimer = 0, cCmdData = VideoData},
+
+Cmd {cChannel = 3, cStreamId = 0, cTimer = 10850, cCmdData = Invoke [String (LPS ["deleteStream"]),Number 0,Null,Number 16#4000000000000000]}
+Cmd {cChannel = 5, cStreamId = 16#2000000, cTimer = 1, cCmdData = Invoke [String (LPS ["onStatus"]),Number 0,Null,Object (fromList [(LPS ["clientid"],Number 16#4192331D60000000),(LPS ["code"],String (LPS ["NetStream.Play.Stop"])),(LPS ["description"],String (LPS ["Stopped playing testVidStream."])),(LPS ["level"],String (LPS ["status"]))])]}
+
+
+
+

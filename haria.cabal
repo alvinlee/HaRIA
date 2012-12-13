@@ -1,0 +1,11 @@
+Name:                haria
+Version:             0.1
+Description:         A dummy one.
+Author:              Alvin Lee
+Maintainer:          alvin@gmail.com
+Build-Depends:       base,mtl,network,binary,time
+
+Executable:          haria
+Main-is:             ProxyServer.hs
+-- ghc-options:         -O2 -fvia-C -fwarn-missing-signatures -fglasgow-exts -funbox-strict-fields -threaded
+ghc-options:         -O2 -fvia-C -fwarn-missing-signatures -fglasgow-exts -funbox-strict-fields -prof -auto-all

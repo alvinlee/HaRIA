@@ -1,0 +1,509 @@
+------------------------------------------------
+Start of Group Conversation 18538 buffer: Tue Sep 13 14:06:11 2005
+[12:09] Chris Allen: john posted it here:
+[12:09] Chris Allen: http://www.acmewebworks.com/Downloads/openCS/BitText.zip
+[12:10] Fernando Augusto: okz
+[12:10] Fernando Augusto: opened
+[12:10] John (j-ohn): yeah
+[12:10] John (j-ohn): got it mick
+[12:10] Mick: ok, so as you scroll through you will see chunks of bytes in 2 columns
+[12:11] Mick: the left column is what is coming from the flash player
+[12:11] Mick: the right column is what is coming from the server
+[12:11] Mick: the first thing we are looking at, on top, is the handshake
+[12:12] Mick: the flash player always starts with 1537 bytes starting with a 0x03 byte
+[12:12] Mick: thats the first chunk in the left column
+[12:12] Fernando Augusto: so far so good...
+[12:12] luke: has this been decoded ?
+[12:13] Mick: it's good to think of it as 1 header byte and 1536 body bytes
+[12:13] Mick: it does not need to be decoded
+[12:13] Mick: that's the funny part :)
+[12:13] luke: :)
+[12:13] Chris Allen: LOL
+[12:13] Chris Allen: ok
+[12:13] Fernando Augusto: (H)
+[12:13] Chris Allen: just stupidly send this whole thing?
+[12:13] Chris Allen: ok carry on Mick
+[12:14] Mick: well, the flash player sends that...
+[12:14] Chris Allen: oh right
+[12:14] Mick: the server then responds with 1536 x 2 bytes + 1 header byte
+[12:14] Chris Allen: we don't do anything
+[12:14] Mick: nope
+[12:15] Mick: and the 2nd half of the server response is exactly the same set of 1536 bytes the player sent
+[12:15] Chris Allen: that's where we stupidly send the whole thing
+[12:15] Chris Allen: gottya
+[12:15] Mick: so, then the player comes back with the 1st half of the server response + our first real RTMP object
+[12:15] Mick: that's the handshake
+[12:15] John (j-ohn): sweeeeeet
+[12:16] luke: ok i bet thats some form of amf
+[12:16] luke: we can work out what in it even if we dont need too
+[12:16] Mick: we'll be looking at amf objects next
+[12:16] luke: cool
+[12:17] luke: jumping the gun :)
+[12:17] John (j-ohn): brb - 
+[12:17] Mick: ok, now we are going to need to get on the same line in the text file
+[12:17] Mick: as you can see in the Players response, at the end there is a connect call.  At least you can see the text 'connect' somewhere in there
+[12:18] Mick: sorry, my grammer is at a minimum right now to speed up typing
+[12:18] John (j-ohn): THAT'S COOL
+[12:18] John (j-ohn): does everyone have it open in a text editor with line numbers?
+[12:18] John (j-ohn): maybe we can just ctrl+g to lines?
+[12:18] Chris Allen: doing that now
+[12:18] Fernando Augusto: doing now..
+[12:19] Chris Allen: ok what line number
+[12:19] Chris Allen: and John can hit ctr+g if he wants to
+[12:19] Chris Allen: ;-)
+[12:20] luke: im there
+[12:20] Chris Allen: ?
+[12:20] Mick: one sec :), I thought wordpad had line numbers
+[12:20] Chris Allen: 827 right?
+[12:20] Fernando Augusto: anyone... notepad has ctrl+g...
+[12:20] luke: 777 in edit plus
+[12:21] Mick: ok, I'm gonna go by the Byte count on the left side
+[12:21] luke: search for "02 00 07 63 6f 6e 6e 65 ........ ...conne"
+[12:21] John (j-ohn): 827 in FlashDevelop
+[12:21] Fernando Augusto: okz...
+[12:21] Chris Allen: oh boy
+[12:21] luke: is that right?
+[12:21] John (j-ohn): sorry 777
+[12:21] Fernando Augusto: ok.... number chris gave...
+[12:21] John (j-ohn): is right
+[12:22] John (j-ohn): I searched for Luke's string
+[12:22] John (j-ohn): and it was 777
+[12:22] Chris Allen: PrimalScript shows it at 827 too
+[12:22] Mick: in the Players response to the handshake, look for the line with the byte count  BF5
+[12:22] Chris Allen: that one is truncated though
+[12:22] John (j-ohn): 827 is the server resopnse though
+[12:22] Chris Allen: yes true that
+[12:22] John (j-ohn): 777 I think that's our line
+[12:22] Mick: the 2nd byte chunk in the Player's column
+[12:23] Mick: do you guys see the byte counts on the left side of the bytes?
+[12:23] Fernando Augusto: yup
+[12:23] luke: yes got it
+[12:23] Chris Allen: me too
+[12:23] John (j-ohn): y
+[12:23] Chris Allen: BF5
+[12:23] Mick: k, on that line... look for the first 0x03 byte
+[12:24] Mick: should be the 13th byte from the left
+[12:24] John (j-ohn): y
+[12:24] Chris Allen: :-)
+[12:24] Fernando Augusto: done
+[12:24] Chris Allen: got it
+[12:24] luke: yup
+[12:25] Mick: ok, this is the beginning of our first AMF object
+[12:25] Mick: based on the structure I know
+[12:25] Mick: the handshake may be an AMF object also, but it does not follow the rest of them
+[12:25] luke: ok.
+[12:26] *** Lucas Ferreira :: has left the conversation.
+[12:26] Mick: anyways, the first byte is a 'package stream header' byte.  Essentially, on a given socket, the FComm server can send/recieve multiple amf objects at once
+[12:26] Mick: and interweaves them together so they all show up at once
+[12:26] Mick: so, to do this, the first byte of an amf object gives it a number the server/player can follow
+[12:27] Mick: an AMF object consists of 2 main parts
+[12:27] Mick: the header and the body
+[12:27] Mick: the size of the body is defined in the header
+[12:27] Mick: and the size of the header is defined in this first byte
+[12:27] Chris Allen: like http
+[12:27] John (j-ohn): makes sense
+[12:27] Mick: the header comes in 4 sizes
+[12:28] Mick: 12 bytes, 8 bytes, 4 bytes, and 1 byte
+[12:28] Mick: the 2 most significant bits (of this first byte) determine the header size
+[12:29] Mick: so for 0x03... 0000 0011
+[12:29] Mick: means the header size bits are 00 which defines a 12 byte header
+[12:30] Mick: this also means the RTMP protocol can handle up to 64 unique AMFs at any moment over a given socket
+[12:30] Mick: and they are shared between both directions
+[12:31] Fernando Augusto: really important to know that.... you can see some FCS app optimization while thinking about it... 
+[12:31] John (j-ohn): remind me to ask you about that later Fernando
+[12:32] Fernando Augusto: ok...
+[12:32] Mick: ok, so counting 12 bytes (including the initial byte), let's look at our header
+[12:33] Fernando Augusto: 02 00 07....... ?
+[12:33] Chris Allen: that's what I got too
+[12:34] Mick: no, up 1 line
+[12:34] Mick: oh, well, that's what is after the header
+[12:34] Chris Allen: right
+[12:34] John (j-ohn): what line?
+[12:34] Chris Allen: Fernando and I were thinking that it's the begining of the body
+[12:34] Mick: the header is 03 00 00 01 00 01 05 14 00 00 00 00
+[12:34] Chris Allen: correct?
+[12:34] Mick: it is
+[12:35] Fernando Augusto: ok
+[12:35] Chris Allen: John it's on C05
+[12:35] John (j-ohn): righty
+[12:35] John (j-ohn): gotit
+[12:35] Chris Allen: line 777
+[12:35] John (j-ohn): yep
+[12:35] John (j-ohn): ok
+[12:35] John (j-ohn): no habla bytes, but would love to ;)
+[12:36] Fernando Augusto: dang... i need some chocolate.... brb... 30 secs...
+[12:36] John (j-ohn): anyway, keep going mick sorry
+[12:37] Mick: so, the header breaks out like this:
+
+03  <- initial amf id byte
+00 00 01 <- unknown bytes.  don't seem to be important
+00 01 05 <- body size (24 bit)
+14 <- AMF function call  (sort of an AMF type... video == 09, audio == 08)
+00 00 00 00 <- AMF Caller Source (00 00 00 00 is the flash player itself.  each NetStream object will have its own value here)
+[12:38] Mick: now, go ahead and count the body and comare it against the size given.  You should be 2 off
+[12:38] John (j-ohn): so video == 09, audio == 08, what's 14?  a reference to a method call? is that right?
+[12:38] Fernando Augusto: John, are you wiking that???? really important source of data....
+[12:39] Mick: John, yes.  14 is a function call
+[12:39] John (j-ohn): LOL< yeah once it all makes sense
+[12:39] John (j-ohn): cool thanks Mick
+[12:39] Mick: I think 13 is shared objects or something like that
+[12:39] Mick: you can test it once you understand the protocol
+[12:39] John (j-ohn): ok, yeah, I'd like to get that written out sometime so I might hit you up for info on that Mick
+[12:39] John (j-ohn): right right cool
+[12:39] John (j-ohn): ok
+[12:39] Mick: sure, np
+[12:42] Mick: ok, it's kinda hard to count the body in a text file, but the size given for the body is 0x0150 which is 336
+[12:43] Mick: oops, 0x0105... 261
+[12:43] Mick: but, if you count the body, you will see there are 263 bytes
+[12:44] Chris Allen: we wil take your word for it ;-)
+[12:44] Mick: this is because AMF objects are streamed in 128 byte chunks
+[12:44] John (j-ohn): lol
+[12:44] Mick: which allows for easy interweaving of multiple amf objects
+[12:45] Mick: luke, this is also going to be our performance bottleneck with MINA if there is one
+[12:45] Fernando Augusto: dang.... will take some double buffering to read it completely...
+[12:45] Mick: if you count 128 bytes after the header, you should see a 0xC3 byte
+[12:45] luke: so we are working in 128 byte chunks ?
+[12:46] Mick: yes and no :)
+[12:46] Mick: an amf stores its size in a 24 bit value, so it can get big.  I've seen it as big as 5K
+[12:46] Mick: but, it breaks it out into 128 byte chunks 
+[12:47] Mick: look for that c3 byte and I'll show you what I mean
+[12:47] Mick: it is on the line with the byte count of c85
+[12:47] Mick: 9th byte
+[12:47] luke: ok
+[12:47] Fernando Augusto: ok
+[12:48] Mick: so, if we break out c3... we get 1100 0011
+[12:48] Mick: which means a header size of 1 and it is part of the 03 AMF started earlier
+[12:48] Fernando Augusto: :P
+[12:48] Fernando Augusto: lost here.... can you explain it again?
+[12:49] Mick: sure, have you located the c3 byte?
+[12:49] Fernando Augusto: yup
+[12:50] Mick: ok, think of it as having the same meaning as the 03 byte from earlier
+[12:50] luke: ok so every 128 bytes we get a header byte
+[12:50] Mick: pretty much
+[12:50] Mick: but not always
+[12:50] Mick: every 128 bytes, you have to subtract from the total body size
+[12:51] Mick: so, if the body was 200, you would get one 128 byte chunk, and one 72 byte chunk
+[12:51] Fernando Augusto: ok.... perfect...
+[12:52] Mick: you don't really see it here, but imagine if there was also an AMF with a header byte of 04 earlier
+[12:52] Chris Allen: I gotta step out for a bit
+[12:52] Chris Allen: but I will read what you guys discuss afterwards
+[12:52] Mick: if you saw a c4 instead of a c3, you would know the next 128 bytes are for that AMF
+[12:52] Chris Allen: very interesting stuff
+[12:52] John (j-ohn): cool cya chris
+[12:52] Mick: later chris, nice to meet you
+[12:52] Fernando Augusto: hmmmmm....
+[12:52] Chris Allen: likewise
+[12:52] Chris Allen: nice to meet you too
+[12:52] Fernando Augusto: cya chris...
+[12:53] Fernando Augusto: mike, answer me on thing... all I nee to do is to xor the header with C0 to get the AMF packet number?
+[12:54] Mick: yeah
+[12:54] Fernando Augusto: or it is limited to 16 packets?????
+[12:54] Fernando Augusto: ok...
+[12:54] Fernando Augusto: perfect...
+[12:54] Mick: it is limited to 64 AMFs concurrently
+[12:54] Mick: but you'll be hard pressed to hit that
+[12:54] Fernando Augusto: ?
+[12:54] Fernando Augusto: :S
+[12:55] Mick: per socket
+[12:55] Mick: ok, lets say this AMF (03) is 10000 bytes
+[12:56] Mick: and let's say a new AMF is sent 1/2 way through the sending of the 03 AMF
+[12:56] Mick: it would have a header byte of 04 (or up)
+[12:56] Mick: basically, the server/client does not have to wait to send new AMF objects
+[12:56] Mick: it folds them in together using the numbering system in the header byte
+[12:57] Fernando Augusto: hmmmmmmmm.......
+[12:57] Mick: kind of like a mini conversation
+[12:57] luke: ok.. so they are all mixed up in 128 byte chunks
+[12:58] Mick: right, but you want to always look at the initial header byte to know where that chunk goes
+[12:58] John (j-ohn): makes sense, keeps it all flowing rather than a que
+[12:58] Mick: right
+[12:58] *** Auto-response sent to Group Conversation: I am currently idle.
+[12:58] John (j-ohn): lol crap
+[12:58] John (j-ohn): I'll see if I can get rid of Chris
+[12:58] Mick: hehe
+[12:59] Mick: now, the size of the AMF header is important 
+[12:59] Mick: this is based on the first 2 bits of the initial byte
+[13:00] Mick: the AMF we are working with has a size of 12.  This includes all header data
+[13:01] Mick: if the size were 8, it would not include the last 4 bytes which are the identifyer of who sent the AMF.  This usually denotes which NetStream object gets the bytes
+[13:02] Mick: this would only be the case if it is the same NetStream object that is expecting the bytes as the previous AMF
+[13:02] Mick: gets really confusing and saves a whopping 4 bytes
+[13:03] Mick: one sec
+[13:04] Mick: k back
+[13:04] John (j-ohn): cool
+[13:05] Mick: so, I'll go over what each of the header size values mean, but it will take a lot of exposure to tcp dumps like this to get used to it
+[13:06] Mick: the next size is 4.  At this size, the body size and the function call are not there either.  And like the size 8 headers, it is assumed that they are the same as the previous AMF sent
+[13:07] Mick: the final size, 1, is just the initial header byte
+[13:07] Mick: usually, this is just a continuation of an already existing AMF
+[13:07] Mick: but, it is possible that all header data is identical from the previous AMF and a c3 (or c4, cX) will be used as the header of a new AMF
+[13:08] Mick: header sizes really come down to bit packing
+[13:08] Mick: to save time, we really didn't use it when sending back to the player
+[13:08] Mick: but we had to be able to interperate it from what we recieved 
+[13:09] luke: what did you send back ?
+[13:09] Mick: we always started new AMF objects with 00 as the header bits
+[13:10] Mick: the one you will see the most is a header of size 8.  This just excludes the last 4 bytes
+[13:10] John (j-ohn): keep going, brb in a minute
+[13:10] Mick: k
+[13:11] Mick: it has the bit value of 01 (as opposed to 00).  
+[13:11] Mick: for our AMF above, it would be 43 instead of 03
+[13:11] Mick: the bytes that are missing are the 4 bytes that define which NetStream object the data belongs to
+[13:12] Mick: so, if you are always sending to the same NetStream object, this never changes
+[13:12] Mick: the NetStream object I am talking about is the one in Flash
+[13:12] luke: ok i think we should just go over this again
+[13:13] Mick: cool, sorry.  It's a lot to swallow at once 
+[13:13] John (j-ohn): LOL
+[13:13] luke: so...
+[13:13] Fernando Augusto: you bet, Mike...
+[13:13] luke: yeah
+[13:13] John (j-ohn): hey can I break in for a sec
+[13:13] Mick: took me about 3 months of staring at these bytes to figure this out
+[13:13] luke: chunks of 128
+[13:13] John (j-ohn): Hey Luke/mick/Fernando
+[13:14] luke: header byte tells you size of header 12, 8, 4, 1
+[13:14] Fernando Augusto: say, John...
+[13:14] John (j-ohn): I have a suggestion that would really help all involved
+[13:14] Fernando Augusto: .... ask Mike to write a draft ASAP?????
+[13:14] *** Marlos Carmo | Imaginato has left the conversation.
+[13:14] John (j-ohn): I wonder if Mick would mind writing this outout...
+[13:14] John (j-ohn): lol
+[13:14] John (j-ohn): well, it can certainly be top level
+[13:14] John (j-ohn): in an outline format
+[13:15] Fernando Augusto: dang... it will heal a damn lot....
+[13:15] Mick: sure
+[13:15] Fernando Augusto: ops...
+[13:15] Fernando Augusto: help...
+[13:15] John (j-ohn): and then let us discuss and really pair it down
+[13:15] John (j-ohn): 1) I have to get working on some deadlines right now
+[13:15] John (j-ohn): 2) we really need to have a doc reference
+[13:15] John (j-ohn): lol ;)
+[13:15] John (j-ohn): I'm sure Mick's busy guy too
+[13:15] Mick: yeah, I should get back to work as well :)
+[13:15] John (j-ohn): yeah, I can see this going for a while
+[13:16] luke: thats a lot for your time mick
+[13:16] Mick: sure
+[13:16] John (j-ohn): Mick, based on the direction you were going...
+[13:16] Fernando Augusto: HURRAY FOR MIKE!!!!
+[13:16] *** marlos@marloscarmo.com (Marlos Carmo | Imaginato) has joined the conversation.
+[13:16] John (j-ohn): how long would it take you to write up an outline based on what you already said, and what you needed to say?
+[13:17] Mick: I would say 6 hours
+[13:17] John (j-ohn): something concise but thorough
+[13:17] Mick: so, maybe 2-3 days
+[13:17] John (j-ohn): ok, is there ANYTHING I can do to help??
+[13:17] John (j-ohn): is there anything any of us here can do?
+[13:17] John (j-ohn): to make it easier?
+[13:17] luke: tea ?
+[13:17] Fernando Augusto: cake?
+[13:17] John (j-ohn): seriously
+[13:17] John (j-ohn): lol
+[13:17] John (j-ohn): dinner, you name it
+[13:18] Mick: nah, thanks :).  If anything, install etherreal and stare at tcp streams :P
+[13:18] John (j-ohn): LOL good enough
+[13:18] John (j-ohn): ;)
+[13:18] Fernando Augusto: you bet I will...
+[13:18] Fernando Augusto: ;)
+[13:18] Mick: it's much easier to look at in etherreal
+[13:18] John (j-ohn): yeah thats true
+[13:18] John (j-ohn): well, Mick would you mind if we set an ETA on that doc with you?
+[13:19] Mick: sure, let's shoot for Friday
+[13:19] John (j-ohn): so we can plan around the time that we might think you'll have it
+[13:19] John (j-ohn): cool, let's do that then
+[13:19] Mick: I gotta make up my time today, so I may not be able to start on it today
+[13:19] Fernando Augusto: wow!
+[13:19] John (j-ohn): yeah, me too ;)
+[13:19] John (j-ohn): I'll be working later tonight to make up lol
+[13:19] luke: im gonna be deaming bytes :)
+[13:19] Mick: word :)
+[13:19] John (j-ohn): cool, I just didn't want to push a bad spot with anyon'es job
+[13:20] John (j-ohn): on my end, I'll put the teams out on the wiki and get Grant up to date on where we're going
+[13:20] Mick: I can chat on weekends too
+[13:20] John (j-ohn): cool can do too
+[13:20] John (j-ohn): great thanks Mick, seriously, you're getting the dinner of your choice when I get up to DC
+[13:20] luke: shall i get spring an mina running
+[13:21] John (j-ohn): yeah you should Luke
+[13:21] John (j-ohn): I think any preparation up front, if you have time, is a good idea
+[13:21] Mick: :), no worries
+[13:21] Fernando Augusto: hmmm...
+[13:21] Mick: yeah, I'd like to work with MINA as well
+[13:21] luke: we can have a chat about what next on the list
+[13:21] John (j-ohn): that way, you can help the other guys get set up as well
+[13:21] Fernando Augusto: just to get in plave
+[13:21] Fernando Augusto: ops...
+[13:21] Fernando Augusto: place...
+[13:21] Fernando Augusto: which frameworks will we be using?
+[13:21] luke: need to get everyone svn access
+[13:21] John (j-ohn): Sounds like Spring/MINA
+[13:22] John (j-ohn): yeah, I have the repository information
+[13:22] John (j-ohn): so I'll be sure to get that to everyone on the teams
+[13:22] Fernando Augusto: hmmm.... okz... already worked with them...
+[13:22] John (j-ohn): cool
+[13:22] luke: cool !!!
+[13:22] John (j-ohn): So, Mick = doc/Friday
+[13:22] Mick: yeah
+[13:22] John (j-ohn): Luke = initial Spring/MINA setup
+[13:22] Fernando Augusto: ... me ????
+[13:22] John (j-ohn): John = wiki/teams/repostiory information
+[13:23] John (j-ohn): Fernando = what would you like to do!?
+[13:23] John (j-ohn): lol
+[13:23] Fernando Augusto: dunno... anything for me???
+[13:23] John (j-ohn): study packets? so that when Mick gets the doc done you can be ahead of the curve?
+[13:23] Fernando Augusto: okz...
+[13:23] Fernando Augusto: :D
+[13:23] Mick: Fernando, create a NetConnection object and just connect and look at those bytes
+[13:24] John (j-ohn): right on
+[13:24] Mick: don't add a NetStream object or video/audio
+[13:24] Fernando Augusto: i will setup a java proxy to study the packets...
+[13:24] luke: ok cool.
+[13:24] Mick: then add a NetStream object, but no Video/Audio
+[13:24] John (j-ohn): ah, right
+[13:24] John (j-ohn): see the differences
+[13:24] luke: can you look at the test client code in mina also 
+[13:25] luke: we should be able to code client -> server session tests
+[13:25] Fernando Augusto: hmmm.... fun...
+[13:25] luke: once we have worked out how things work
+[13:25] luke: maybe not yet.
+[13:25] luke: doc is for us
+[13:26] luke: the server will need some test client to send the bytes
+[13:26] John (j-ohn): ok, cool
+[13:26] John (j-ohn): Fernando, maybe you and luke can get together on this?
+[13:26] luke: yeah
+[13:26] Fernando Augusto: Sure we can!!!
+[13:26] John (j-ohn): coooool
+[13:26] John (j-ohn): ok, we done?
+[13:26] John (j-ohn): LOL
+[13:27] John (j-ohn): 3hrs later
+[13:27] Mick: on the test client, try to isolate each of the networking functions to they happen separately
+[13:27] luke: yeah perhaps  fernando and I should keep chatting about mina etc
+[13:27] Mick: NetConnection.Connect()... new NetStream(NetConnection)
+[13:27] John (j-ohn): yeah, if you guys like, keep going
+[13:28] John (j-ohn): I gotta get going
+[13:28] Mick: I gotta go, but I'll talk to you guys soon
+[13:28] Mick: :P
+[13:28] John (j-ohn): yep! thanks Mick LOVE YOU!
+[13:28] John (j-ohn): heteralove
+[13:28] Mick: cheers guys... laters
+[13:28] John (j-ohn): l8r
+[13:28] Fernando Augusto: hehe... in Brazil, mina means like "girl", "chick" or something like....
+[13:28] luke: thanks again
+[13:28] John (j-ohn): haha!
+[13:28] *** Mick has left the conversation.
+[13:28] luke: fernando.. i dont actually have a lot of flash comm experience all my server stuff is amf / xml socket
+[13:29] luke: what have you used mina for ?
+[13:29] *** John (j-ohn) has left the conversation.
+[13:29] Fernando Augusto: I was trying mina for a game engine I was writing...
+[13:29] luke: what was your experience
+[13:30] Fernando Augusto: very poor with "her".... not able to continue the project...
+[13:30] Claus: olá! did i miss something? ;)
+[13:30] Fernando Augusto: lack of time...
+[13:30] luke: :)
+[13:30] Fernando Augusto: brb.. nature is calling...
+[13:30] Fernando Augusto: :P
+[13:30] luke: shall i fill you in claus
+[13:30] Claus: fill me in?
+[13:31] luke: tell you what people talked about 
+[13:31] luke: high high level
+[13:31] luke: its been a 3hr chat !
+[13:31] Claus: putz
+[13:31] Claus: i think i'll read the history
+[13:31] luke: :) cool
+[13:36] Fernando Augusto: hey
+[13:36] Fernando Augusto: i am back...
+[13:37] Fernando Augusto: luke, add me in your contact list... fernando@larp.com.br
+[13:38] Fernando Augusto: well... where were we anyway?
+[13:38] luke: talking about mina
+[13:38] luke: im cant find it now but i saw somthing about mock client object
+[13:39] Fernando Augusto: yup... I was reading about it...
+[13:39] luke: so we can then test the protocol layer code once we understand it
+[13:39] luke: i think it would be easier than using flash
+[13:39] Fernando Augusto: certainly it will...
+[13:39] luke: so we can all work on the same stream
+[13:40] Fernando Augusto: dang... I can´t wait to get that doc mike is about to write....
+[13:40] luke: me either :)
+[13:40] luke: should we convert the file we have into binary chunks in java
+[13:41] Fernando Augusto: i work in full time with FCS for about a year and half.... only god know how many times I wanted to get over the control of that black box...
+[13:41] luke: :) 
+[13:41] luke: we can also do the first bit from what we know.
+[13:41] luke: client sends x bytes ... server responds.. 
+[13:41] Fernando Augusto: YuP!
+[13:42] Fernando Augusto: if we can simulate a server for a client to handshake and return the connect.success status... dang.. 
+[13:42] luke: yeah.. that will be a good start
+[13:42] Fernando Augusto: certainly will...
+[13:42] luke: and test our  mina code is working
+[13:43] Fernando Augusto: yup...
+[13:43] luke: i will email john for svn access details
+[13:43] Fernando Augusto: KEWL!!!!
+[13:44] Fernando Augusto: i was wondering how we will work... 
+[13:44] Fernando Augusto: how you people are used to work ina a distributed team environment?
+[13:44] luke: well normally talk it over on the list
+[13:44] luke: then one or two people work a some code
+[13:45] luke: then come back to the list for testing, suggestions, etc
+[13:45] Fernando Augusto: i am quite n00b on distributed teams...
+[13:45] luke: but on this im thinking our focus is probably coding what mike is documenting
+[13:45] Chris Allen: hey guys just came back
+[13:46] luke: so.. if he write.. here is an chunk which does x.. we code that up with a test
+[13:46] luke: i dont know about you but i understand.. code better than bytes :)
+[13:46] Fernando Augusto: so do I....
+[13:47] Fernando Augusto: :P
+[13:47] luke: its much easier to understand the protocol from the code
+[13:47] Fernando Augusto: let byte array to be discussed by servers... coders discuss code...
+[13:47] Fernando Augusto: ROFLMAO
+[13:48] luke: i think we will probably have some DataInputObject
+[13:48] Fernando Augusto: certainly...
+[13:48] Fernando Augusto: maybe a 2 layered buffer... one to join chunks and other for AMF packets...
+[13:48] luke: yeah
+[13:49] luke: coz we dont need to decode the amf until after we have all the chunks
+[13:49] Fernando Augusto: yup!
+[13:49] Fernando Augusto: maybe this buffer and a few listeners... 
+[13:50] luke: so a higher level joined amf buffer.. or video buffer
+[13:50] Fernando Augusto: you get it...
+[13:50] Fernando Augusto: hmmm....
+[13:50] luke: which is made up off many little chunk buffers.. but abstracts away all this header stuff
+[13:51] Fernando Augusto: yup! an AMF Packet abstract class and then a VideoAMFPacket class extending it for example...
+[13:51] luke: by that point we are past any network code
+[13:51] *** DavidR has left the conversation.
+[13:51] Fernando Augusto: certainly...
+[13:52] Fernando Augusto: I wish to think a little bit about the major classes... Server / Adaptor / VHost / Application....
+[13:52] luke: vhost for rtmp ?
+[13:53] Fernando Augusto: yup... why not... FCS already do that...
+[13:53] luke: cool.. then it must send some host header
+[13:53] Fernando Augusto: since 1.0...
+[13:54] luke: or setup via  http first ?
+[13:54] Fernando Augusto: that´s why I want to see the handshake packets better...
+[13:54] luke: yeah there is stuff in there
+[13:55] luke: could you work on them 
+[13:55] Fernando Augusto: there must be...
+[13:55] luke: becuase mike doesnt seem to know whats in them
+[13:55] luke: i have some low level amf data input / output classes
+[13:55] Fernando Augusto: i dont believe it is AMF...
+[13:56] luke: oh... we never talked about what os licence we are gonna use
+[13:56] luke: maybe thats a one for the list
+[13:56] Fernando Augusto: sure it is...
+[13:56] luke: its quite big.. 
+[13:57] luke: we  dont know if it changes
+[13:57] Fernando Augusto: ??????????????
+[13:57] Fernando Augusto: I don´t get it...
+[13:58] luke: sorry
+[13:58] Fernando Augusto: i didn´t understand...
+[13:59] luke: i was saying we dont know if the handshake bytes change
+[13:59] luke: or they are always the same
+[13:59] Fernando Augusto: yup... that´s something we don´t know...
+[13:59] Fernando Augusto: we don´t even know if that bother....
+[13:59] Fernando Augusto: maybe it is just packet filler...
+[14:01] Fernando Augusto: well... nobody knows... let´s study a little bit...
+[14:01] Fernando Augusto: maybe we can do some code...
+[14:01] Fernando Augusto: and some discover...
+[14:01] Fernando Augusto: i need to go...
+[14:01] Fernando Augusto: there is a meeting i need to attend
+[14:01] luke: ok i will try and write something up and post tomorrow
+[14:01] Fernando Augusto: cool... i´ll be waiting...
+[14:01] Fernando Augusto: cya!
+[14:02] Chris Allen: Bye guys
+[14:02] *** Fernando Augusto has left the conversation.
+[14:02] luke: buy
+[14:02] Chris Allen: thanks for all of your participation in this
+[14:02] luke: bye
+[14:02] luke: doh
+[14:02] Chris Allen: lol
+[14:02] Chris Allen: nice Luke
+[14:02] luke: its late here
+[14:02] luke: sell
+[14:02] Chris Allen: get some sleep dude
+[14:02] luke: night ppl
+End of Group Conversation 18538 buffer: Tue Sep 13 14:06:11 2005
